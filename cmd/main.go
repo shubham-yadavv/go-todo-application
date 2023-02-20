@@ -16,8 +16,8 @@ func init() {
 func main() {
 	r := gin.Default()
 
-	routes.TodoRoutes(r)
 	routes.UserRoutes(r)
+	routes.NotesRoutes(r)
 
 	r.Run("localhost:3000")
 

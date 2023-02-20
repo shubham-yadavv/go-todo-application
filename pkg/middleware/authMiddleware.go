@@ -6,35 +6,34 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/shubham-yadavv/go-todo-application/pkg/config"
-	"github.com/shubham-yadavv/go-todo-application/pkg/models"
 )
 
 func Authenticate(c *gin.Context) {
-	tokenString, err := c.Cookie("token")
+	token, err := c.Cookie("token")
 
 	if err != nil {
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Missing token",
+		})
+		c.Abort()
 		return
 	}
 
-	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, err
-		}
+	claims := jwt.MapClaims{}
+
+	_, err = jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		var user models.User
-		if config.DB.Where("username = ?", claims["username"]).First(&user).RowsAffected == 0 {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-		c.Set("user", user)
-		c.Next()
-	} else {
-		c.AbortWithStatus(http.StatusUnauthorized)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Invalid token",
+		})
+		c.Abort()
+		return
 	}
 
+	c.Set("user_id", uint(claims["user_id"].(float64)))
+
+	c.Next()
 }
