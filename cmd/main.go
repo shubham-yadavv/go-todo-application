@@ -19,6 +19,14 @@ func main() {
 	routes.UserRoutes(r)
 	routes.NotesRoutes(r)
 
+	r.GET("/", heatlhCheck)
+
 	r.Run("localhost:3000")
 
+}
+
+func heatlhCheck(c *gin.Context) {
+	c.JSON(200, gin.H{
+		"message": "OK",
+	})
 }
